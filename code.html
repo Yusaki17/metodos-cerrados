@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métodos Numéricos · Bisección y Falsa Posición</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: #f0f4fb;
+            margin: 0;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+            padding: 2rem 2.5rem 2.8rem;
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 2.1rem;
+            color: #0b1e33;
+            margin-top: 0;
+            margin-bottom: 0.2rem;
+            border-left: 6px solid #2a7de1;
+            padding-left: 1.2rem;
+        }
+        .subtitle {
+            color: #3e5a7a;
+            margin-left: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+            font-size: 1rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+        }
+        .card {
+            background: #f9faff;
+            border-radius: 22px;
+            padding: 1.5rem 1.8rem 1.8rem;
+            border: 1px solid #e9edf4;
+            box-shadow: 0 2px 6px rgba(0, 20, 40, 0.02);
+        }
+        .card h2 {
+            font-weight: 600;
+            font-size: 1.4rem;
+            color: #0b2a4a;
+            margin-top: 0;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 small {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #4e6d8e;
+        }
+        .param-group {
+            background: white;
+            padding: 1rem 1.2rem;
+            border-radius: 16px;
+            margin-bottom: 1.2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .param-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.4rem 1rem;
+            margin: 0.5rem 0;
+        }
+        .param-row label {
+            font-weight: 500;
+            color: #1f3a5c;
+            min-width: 60px;
+            font-size: 0.9rem;
+        }
+        .param-row input {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            width: 100px;
+            background: white;
+            transition: 0.15s;
+        }
+        .param-row input:focus {
+            border-color: #2a7de1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.15);
+        }
+        .param-row .func-display {
+            background: #eef3fa;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #0a2647;
+        }
+        .btn {
+            background: #1f3a5c;
+            color: white;
+            border: none;
+            padding: 0.5rem 2rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            letter-spacing: 0.3px;
+        }
+        .btn:hover {
+            background: #12304f;
+            transform: scale(0.97);
+        }
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .table-header-info {
+            background: #f8faff;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table-header-info .title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #0b1e33;
+        }
+        .table-header-info .params {
+            font-size: 0.85rem;
+            color: #4a6a8a;
+            margin-top: 0.2rem;
+        }
+        .table-header-info .params strong {
+            color: #0b1e33;
+        }
+        .table-header-info .function {
+            font-family: 'Courier New', monospace;
+            background: #eef3fa;
+            padding: 0.2rem 0.8rem;
+            border-radius: 6px;
+            display: inline-block;
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+            color: #0a2647;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 550px;
+        }
+        th {
+            background: #f0f4fb;
+            color: #1a3350;
+            font-weight: 600;
+            padding: 0.7rem 0.8rem;
+            text-align: center;
+            border-bottom: 2px solid #d0dae8;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+        td {
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #eaeef5;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr.converged td {
+            background: #e6f7e6;
+            font-weight: 600;
+        }
+        tr.converged td:first-child {
+            border-left: 4px solid #2a9d8f;
+        }
+        .result-box {
+            background: #eaf2fd;
+            border-radius: 14px;
+            padding: 0.8rem 1.2rem;
+            margin-top: 0.8rem;
+            color: #0b2a4a;
+            font-weight: 500;
+            border-left: 4px solid #2a7de1;
+            font-size: 0.95rem;
+        }
+        .result-box span {
+            font-weight: 700;
+            color: #00337a;
+        }
+        .footnote {
+            color: #4b637f;
+            font-size: 0.8rem;
+            margin-top: 0.7rem;
+            border-top: 1px dashed #d0dae8;
+            padding-top: 0.7rem;
+        }
+        .convergence-badge {
+            background: #2a9d8f;
+            color: white;
+            padding: 0.1rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .auto-update-hint {
+            font-size: 0.75rem;
+            color: #5b7a9a;
+            margin-left: 0.6rem;
+            font-weight: 400;
+        }
+        .iteration-count {
+            background: #dce5f5;
+            padding: 0.1rem 1rem;
+            border-radius: 40px;
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+        .convergence-info {
+            background: #f0faf0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0 0 12px 12px;
+            border-top: 1px solid #d0e8d0;
+            font-size: 0.85rem;
+            color: #1a5a4a;
+        }
+        .convergence-info strong {
+            color: #0a3a2a;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔢 Raíces · Bisección & Falsa Posición</h1>
+    <div class="subtitle">Parámetros editables · Tabla completa de iteraciones</div>
+
+    <div class="grid-2">
+        <!-- ==================== BISECCIÓN ==================== -->
+        <div class="card">
+            <h2>📐 Bisección <small>· f(C)</small></h2>
+            <div class="param-group">
+                <div class="param-row">
+                    <label>f(C) =</label>
+                    <span class="func-display">1/(C−8.5) − 0.35·ln(C−2)</span>
+                </div>
+                <div class="param-row">
+                    <label>a</label>
+                    <input type="number" id="bisecA" value="9" step="0.1">
+                    <label>b</label>
+                    <input type="number" id="bisecB" value="10" step="0.1">
+                </div>
+                <div class="param-row">
+                    <label>Tolerancia %</label>
+                    <input type="number" id="bisecTol" value="0.5" step="0.1" style="width:80px;">
+                    <span style="font-size:0.8rem; color:#3d5f82;">max iter 50</span>
+                    <span class="auto-update-hint">(cambia y actualiza)</span>
+                </div>
+                <button class="btn" id="btnBisec" style="margin-top:0.2rem;">▶ Calcular</button>
+            </div>
+            <div id="bisecResult">
+                <div class="table-container">
+                    <div class="table-header-info">
+                        <div class="title">📊 Tabla de Iteraciones - Bisección</div>
+                        <div class="params">
+                            <strong>Parámetros:</strong> Tolerancia = <span id="bisecTolDisplay">0.5</span>%, Máx. Iteraciones = 50
+                        </div>
+                        <div class="function">
+                            f(x) = 1/(x−8.5) − 0.35·ln(x−2)
+                        </div>
+                        <div class="params" style="margin-top:0.2rem;">
+                            <strong>Intervalo:</strong> [<span id="bisecADisplay">9</span>, <span id="bisecBDisplay">10</span>]
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Iter</th>
+                                    <th>a</th>
+                                    <th>b</th>
+                                    <th>xr</th>
+                                    <th>f(xr)</th>
+                                    <th>Error %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyBisec">
+                                <tr><td colspan="6" style="color:#7a8aa0; font-family: inherit; text-align: center;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="bisecConvergence" class="convergence-info" style="display:none;"></div>
+                </div>
+                <div id="bisecInterpret" class="result-box">⚡ Capacidad óptima: <span id="bisecRaiz">—</span> Mbps</div>
+            </div>
+            <div class="footnote">C > 8.5 · raíz donde T(C)=0 · redondear al alza en implementación real.</div>
+        </div>
+
+        <!-- ==================== FALSA POSICIÓN ==================== -->
+        <div class="card">
+            <h2>📈 Falsa Posición <small>· f(t)</small></h2>
+            <div class="param-group">
+                <div class="param-row">
+                    <label>f(t) =</label>
+                    <span class="func-display">45+12t − 20·e<sup>0.4t</sup></span>
+                </div>
+                <div class="param-row">
+                    <label>a</label>
+                    <input type="number" id="falsaA" value="0" step="0.1">
+                    <label>b</label>
+                    <input type="number" id="falsaB" value="5" step="0.1">
+                </div>
+                <div class="param-row">
+                    <label>Tolerancia %</label>
+                    <input type="number" id="falsaTol" value="0.5" step="0.1" style="width:80px;">
+                    <span style="font-size:0.8rem; color:#3d5f82;">max iter 50</span>
+                    <span class="auto-update-hint">(cambia y actualiza)</span>
+                </div>
+                <button class="btn" id="btnFalsa" style="margin-top:0.2rem;">▶ Calcular</button>
+            </div>
+            <div id="falsaResult">
+                <div class="table-container">
+                    <div class="table-header-info">
+                        <div class="title">📊 Tabla de Iteraciones - Falsa Posición</div>
+                        <div class="params">
+                            <strong>Parámetros:</strong> Tolerancia = <span id="falsaTolDisplay">0.5</span>%, Máx. Iteraciones = 50
+                        </div>
+                        <div class="function">
+                            f(t) = 45+12t − 20·e<sup>0.4t</sup>
+                        </div>
+                        <div class="params" style="margin-top:0.2rem;">
+                            <strong>Intervalo:</strong> [<span id="falsaADisplay">0</span>, <span id="falsaBDisplay">5</span>]
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Iter</th>
+                                    <th>a</th>
+                                    <th>b</th>
+                                    <th>xr</th>
+                                    <th>f(xr)</th>
+                                    <th>Error %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyFalsa">
+                                <tr><td colspan="6" style="color:#7a8aa0; font-family: inherit; text-align: center;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="falsaConvergence" class="convergence-info" style="display:none;"></div>
+                </div>
+                <div id="falsaInterpret" class="result-box">⏳ Momento de equilibrio: <span id="falsaRaiz">—</span> años</div>
+            </div>
+            <div class="footnote">t en años · C1(t)=C2(t) · a partir de t* conviene migrar a la nube.</div>
+        </div>
+    </div>
+
+    <div style="margin-top:2rem; border-top:1px solid #e2e8f0; padding-top:1.2rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; color:#365173;">
+        <span><strong>📌 Criterios:</strong> interpretación 20% · intervalo 15% · código 35% · tabla 15% · contexto 15%</span>
+        <span class="iteration-count">Tolerancia sugerida 0.5% · max 50 iter</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Funciones matemáticas
+        function fBisec(C) {
+            if (C <= 8.5 || C <= 2) return NaN;
+            return 1.0 / (C - 8.5) - 0.35 * Math.log(C - 2);
+        }
+
+        function fFalsa(t) {
+            return 45 + 12 * t - 20 * Math.exp(0.4 * t);
+        }
+
+        // Método de Bisección
+        function biseccion(a, b, tolPercent, maxIter = 50) {
+            if (a >= b) return { error: "Intervalo inválido: a debe ser < b." };
+            
+            let fa = fBisec(a);
+            let fb = fBisec(b);
+            
+            if (isNaN(fa) || isNaN(fb)) {
+                return { error: "f(a) o f(b) no definido (C <= 8.5 o C <= 2)" };
+            }
+            if (fa * fb >= 0) {
+                return { error: "No hay cambio de signo en [a,b]." };
+            }
+
+            let rows = [];
+            let iter = 0;
+            let xr = a;
+            let xr_old = a;
+            let error = 100;
+
+            while (iter < maxIter) {
+                xr = (a + b) / 2;
+                let fxr = fBisec(xr);
+                
+                if (iter === 0) {
+                    error = 100;
+                } else {
+                    error = Math.abs((xr - xr_old) / xr) * 100;
+                }
+
+                rows.push({
+                    iter: iter + 1,
+                    a: a,
+                    b: b,
+                    xr: xr,
+                    fxr: fxr,
+                    error: error
+                });
+
+                if (fxr === 0 || error <= tolPercent) {
+                    break;
+                }
+
+                if (fBisec(a) * fxr < 0) {
+                    b = xr;
+                } else {
+                    a = xr;
+                }
+
+                xr_old = xr;
+                iter++;
+            }
+
+            return {
+                rows: rows,
+                root: xr,
+                a_inicial: rows[0]?.a || 0,
+                b_inicial: rows[0]?.b || 0,
+                converged: error <= tolPercent || (rows.length > 0 && rows[rows.length-1].fxr === 0)
+            };
+        }
+
+        // Método de Falsa Posición
+        function falsaPosicion(a, b, tolPercent, maxIter = 50) {
+            if (a >= b) return { error: "Intervalo inválido: a debe ser < b." };
+            
+            let fa = fFalsa(a);
+            let fb = fFalsa(b);
+            
+            if (isNaN(fa) || isNaN(fb)) {
+                return { error: "f(a) o f(b) no definido." };
+            }
+            if (fa * fb >= 0) {
+                return { error: "No hay cambio de signo en [a,b]." };
+            }
+
+            let rows = [];
+            let iter = 0;
+            let xr = a;
+            let xr_old = a;
+            let error = 100;
+
+            while (iter < maxIter) {
+                xr = (a * fb - b * fa) / (fb - fa);
+                let fxr = fFalsa(xr);
+                
+                if (iter === 0) {
+                    error = 100;
+                } else {
+                    error = Math.abs((xr - xr_old) / xr) * 100;
+                }
+
+                rows.push({
+                    iter: iter + 1,
+                    a: a,
+                    b: b,
+                    xr: xr,
+                    fxr: fxr,
+                    error: error
+                });
+
+                if (fxr === 0 || error <= tolPercent) {
+                    break;
+                }
+
+                if (fFalsa(a) * fxr < 0) {
+                    b = xr;
+                    fb = fxr;
+                } else {
+                    a = xr;
+                    fa = fxr;
+                }
+
+                xr_old = xr;
+                iter++;
+            }
+
+            return {
+                rows: rows,
+                root: xr,
+                a_inicial: rows[0]?.a || 0,
+                b_inicial: rows[0]?.b || 0,
+                converged: error <= tolPercent || (rows.length > 0 && rows[rows.length-1].fxr === 0)
+            };
+        }
+
+        // Renderizar tabla
+        function renderTable(tbodyId, data, raizSpanId, interpretDivId, contextMessage, 
+                             tolDisplayId, aDisplayId, bDisplayId, convergenceId) {
+            const tbody = document.getElementById(tbodyId);
+            const raizSpan = document.getElementById(raizSpanId);
+            const interpretDiv = document.getElementById(interpretDivId);
+            const tolDisplay = document.getElementById(tolDisplayId);
+            const aDisplay = document.getElementById(aDisplayId);
+            const bDisplay = document.getElementById(bDisplayId);
+            const convergenceDiv = document.getElementById(convergenceId);
+
+            if (!data || data.error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#b33; font-family: inherit; text-align: center;">⚠️ ${data?.error || 'Error'}</td></tr>`;
+                raizSpan.textContent = '—';
+                if (interpretDiv) interpretDiv.innerHTML = `<span style="font-weight:600;">📌 Interpretación:</span> ${data?.error || 'Error en el cálculo'}`;
+                if (convergenceDiv) convergenceDiv.style.display = 'none';
+                return;
+            }
+
+            if (data.rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#7a8aa0; font-family: inherit; text-align: center;">No se generaron iteraciones</td></tr>`;
+                raizSpan.textContent = '—';
+                if (convergenceDiv) convergenceDiv.style.display = 'none';
+                return;
+            }
+
+            // Mostrar intervalo
+            if (aDisplay) aDisplay.textContent = data.a_inicial.toFixed(2);
+            if (bDisplay) bDisplay.textContent = data.b_inicial.toFixed(2);
+
+            let html = '';
+            const lastIdx = data.rows.length - 1;
+            
+            for (let i = 0; i < data.rows.length; i++) {
+                const r = data.rows[i];
+                const isConverged = (i === lastIdx && data.converged);
+                const rowClass = isConverged ? 'converged' : '';
+                const errorDisplay = (i === 0) ? '100.000000' : r.error.toFixed(6);
+                
+                html += `<tr class="${rowClass}">
+                    <td>${r.iter}</td>
+                    <td>${r.a.toFixed(6)}</td>
+                    <td>${r.b.toFixed(6)}</td>
+                    <td><strong>${r.xr.toFixed(6)}</strong></td>
+                    <td>${r.fxr.toFixed(6)}</td>
+                    <td>${errorDisplay}</td>
+                </tr>`;
+            }
+            
+            tbody.innerHTML = html;
+
+            // Mostrar convergencia
+            if (convergenceDiv) {
+                if (data.converged) {
+                    const lastRow = data.rows[data.rows.length-1];
+                    convergenceDiv.style.display = 'block';
+                    convergenceDiv.innerHTML = `
+                        <strong>✓ Convergencia en la iteración ${lastRow.iter}</strong><br>
+                        Error: ${lastRow.error.toFixed(6)}% < 0.5%
+                    `;
+                } else {
+                    convergenceDiv.style.display = 'none';
+                }
+            }
+
+            // Actualizar raíz
+            const rootVal = data.root;
+            raizSpan.textContent = rootVal !== undefined ? rootVal.toFixed(6) : '—';
+
+            // Actualizar tolerancia mostrada
+            if (tolDisplay) {
+                const tolInput = document.getElementById(tolDisplayId.replace('Display', ''));
+                if (tolInput) tolDisplay.textContent = tolInput.value;
+            }
+
+            // Interpretación
+            if (interpretDiv) {
+                let extra = '';
+                if (contextMessage === 'bisec') {
+                    extra = `Capacidad mínima ≈ ${rootVal.toFixed(4)} Mbps. En la práctica, redondear hacia arriba (ej. ${Math.ceil(rootVal)} Mbps) por disponibilidad y tráfico pico.`;
+                    if (data.converged) {
+                        extra += ` <span class="convergence-badge">✓ Convergida en iter ${data.rows.length}</span>`;
+                    }
+                } else if (contextMessage === 'falsa') {
+                    const t = rootVal;
+                    const c1 = 45 + 12 * t;
+                    const c2 = 20 * Math.exp(0.4 * t);
+                    extra = `t ≈ ${t.toFixed(4)} años. Antes de t*, el costo local (C1) es menor; después, la nube (C2) es más económica. Conviene migrar a partir de ${t.toFixed(2)} años.`;
+                    if (data.converged) {
+                        extra += ` <span class="convergence-badge">✓ Convergida en iter ${data.rows.length}</span>`;
+                    }
+                }
+                interpretDiv.innerHTML = `<span style="font-weight:600;">📌 Interpretación:</span> ${extra}`;
+            }
+        }
+
+        // Funciones de actualización
+        function actualizarBiseccion() {
+            const a = parseFloat(document.getElementById('bisecA').value);
+            const b = parseFloat(document.getElementById('bisecB').value);
+            const tol = parseFloat(document.getElementById('bisecTol').value);
+            
+            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0) {
+                return;
+            }
+            
+            const result = biseccion(a, b, tol, 50);
+            renderTable('bodyBisec', result, 'bisecRaiz', 'bisecInterpret', 'bisec', 
+                        'bisecTolDisplay', 'bisecADisplay', 'bisecBDisplay', 'bisecConvergence');
+        }
+
+        function actualizarFalsa() {
+            const a = parseFloat(document.getElementById('falsaA').value);
+            const b = parseFloat(document.getElementById('falsaB').value);
+            const tol = parseFloat(document.getElementById('falsaTol').value);
+            
+            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0) {
+                return;
+            }
+            
+            const result = falsaPosicion(a, b, tol, 50);
+            renderTable('bodyFalsa', result, 'falsaRaiz', 'falsaInterpret', 'falsa',
+                        'falsaTolDisplay', 'falsaADisplay', 'falsaBDisplay', 'falsaConvergence');
+        }
+
+        // Eventos
+        document.getElementById('btnBisec').addEventListener('click', actualizarBiseccion);
+        document.getElementById('btnFalsa').addEventListener('click', actualizarFalsa);
+
+        // Actualización automática
+        ['bisecA', 'bisecB', 'bisecTol'].forEach(id => {
+            document.getElementById(id).addEventListener('input', actualizarBiseccion);
+        });
+
+        ['falsaA', 'falsaB', 'falsaTol'].forEach(id => {
+            document.getElementById(id).addEventListener('input', actualizarFalsa);
+        });
+
+        // Carga inicial
+        window.addEventListener('load', function() {
+            actualizarBiseccion();
+            actualizarFalsa();
+        });
+    })();
+</script>
+</body>
+</html>
