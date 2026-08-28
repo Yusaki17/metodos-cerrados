@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Métodos Numéricos · Bisección y Falsa Posición</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -206,6 +207,13 @@
         tr.converged td:first-child {
             border-left: 4px solid #2a9d8f;
         }
+        tr.max-iter td {
+            background: #fff3cd;
+            font-weight: 600;
+        }
+        tr.max-iter td:first-child {
+            border-left: 4px solid #ffc107;
+        }
         .result-box {
             background: #eaf2fd;
             border-radius: 14px;
@@ -236,6 +244,15 @@
             font-weight: 600;
             margin-left: 0.5rem;
         }
+        .max-iter-badge {
+            background: #ffc107;
+            color: #333;
+            padding: 0.1rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
         .auto-update-hint {
             font-size: 0.75rem;
             color: #5b7a9a;
@@ -260,12 +277,40 @@
         .convergence-info strong {
             color: #0a3a2a;
         }
+        .convergence-info.max-iter-info {
+            background: #fff8e1;
+            border-top-color: #ffc107;
+            color: #856404;
+        }
+        .convergence-info.max-iter-info strong {
+            color: #856404;
+        }
+        .chart-container {
+            margin-top: 1rem;
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            height: 220px;
+            position: relative;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .chart-title {
+            font-size: 0.8rem;
+            color: #4a6a8a;
+            text-align: center;
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>🔢 Raíces · Bisección & Falsa Posición</h1>
-    <div class="subtitle">Parámetros editables · Tabla completa de iteraciones</div>
+    <div class="subtitle">Parámetros editables · Tabla completa de iteraciones · Gráficas interactivas</div>
 
     <div class="grid-2">
         <!-- ==================== BISECCIÓN ==================== -->
@@ -285,7 +330,8 @@
                 <div class="param-row">
                     <label>Tolerancia %</label>
                     <input type="number" id="bisecTol" value="0.5" step="0.1" style="width:80px;">
-                    <span style="font-size:0.8rem; color:#3d5f82;">max iter 50</span>
+                    <label style="min-width:40px;">Max Iter</label>
+                    <input type="number" id="bisecMaxIter" value="50" step="1" min="1" max="100" style="width:70px;">
                     <span class="auto-update-hint">(cambia y actualiza)</span>
                 </div>
                 <button class="btn" id="btnBisec" style="margin-top:0.2rem;">▶ Calcular</button>
@@ -295,7 +341,7 @@
                     <div class="table-header-info">
                         <div class="title">📊 Tabla de Iteraciones - Bisección</div>
                         <div class="params">
-                            <strong>Parámetros:</strong> Tolerancia = <span id="bisecTolDisplay">0.5</span>%, Máx. Iteraciones = 50
+                            <strong>Parámetros:</strong> Tolerancia = <span id="bisecTolDisplay">0.5</span>%, Máx. Iteraciones = <span id="bisecMaxIterDisplay">50</span>
                         </div>
                         <div class="function">
                             f(x) = 1/(x−8.5) − 0.35·ln(x−2)
@@ -323,6 +369,10 @@
                     </div>
                     <div id="bisecConvergence" class="convergence-info" style="display:none;"></div>
                 </div>
+                <div class="chart-container">
+                    <div class="chart-title">📈 Comportamiento de f(C) - Bisección</div>
+                    <canvas id="chartBisec"></canvas>
+                </div>
                 <div id="bisecInterpret" class="result-box">⚡ Capacidad óptima: <span id="bisecRaiz">—</span> Mbps</div>
             </div>
             <div class="footnote">C > 8.5 · raíz donde T(C)=0 · redondear al alza en implementación real.</div>
@@ -345,7 +395,8 @@
                 <div class="param-row">
                     <label>Tolerancia %</label>
                     <input type="number" id="falsaTol" value="0.5" step="0.1" style="width:80px;">
-                    <span style="font-size:0.8rem; color:#3d5f82;">max iter 50</span>
+                    <label style="min-width:40px;">Max Iter</label>
+                    <input type="number" id="falsaMaxIter" value="50" step="1" min="1" max="100" style="width:70px;">
                     <span class="auto-update-hint">(cambia y actualiza)</span>
                 </div>
                 <button class="btn" id="btnFalsa" style="margin-top:0.2rem;">▶ Calcular</button>
@@ -355,7 +406,7 @@
                     <div class="table-header-info">
                         <div class="title">📊 Tabla de Iteraciones - Falsa Posición</div>
                         <div class="params">
-                            <strong>Parámetros:</strong> Tolerancia = <span id="falsaTolDisplay">0.5</span>%, Máx. Iteraciones = 50
+                            <strong>Parámetros:</strong> Tolerancia = <span id="falsaTolDisplay">0.5</span>%, Máx. Iteraciones = <span id="falsaMaxIterDisplay">50</span>
                         </div>
                         <div class="function">
                             f(t) = 45+12t − 20·e<sup>0.4t</sup>
@@ -383,6 +434,10 @@
                     </div>
                     <div id="falsaConvergence" class="convergence-info" style="display:none;"></div>
                 </div>
+                <div class="chart-container">
+                    <div class="chart-title">📈 Comportamiento de f(t) - Falsa Posición</div>
+                    <canvas id="chartFalsa"></canvas>
+                </div>
                 <div id="falsaInterpret" class="result-box">⏳ Momento de equilibrio: <span id="falsaRaiz">—</span> años</div>
             </div>
             <div class="footnote">t en años · C1(t)=C2(t) · a partir de t* conviene migrar a la nube.</div>
@@ -391,12 +446,16 @@
 
     <div style="margin-top:2rem; border-top:1px solid #e2e8f0; padding-top:1.2rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.8rem; color:#365173;">
         <span><strong>📌 Criterios:</strong> interpretación 20% · intervalo 15% · código 35% · tabla 15% · contexto 15%</span>
-        <span class="iteration-count">Tolerancia sugerida 0.5% · max 50 iter</span>
+        <span class="iteration-count">Tolerancia sugerida 0.5% · max iter 50</span>
     </div>
 </div>
 
 <script>
     (function() {
+        // Variables para los gráficos
+        let chartBisecInstance = null;
+        let chartFalsaInstance = null;
+
         // Funciones matemáticas
         function fBisec(C) {
             if (C <= 8.5 || C <= 2) return NaN;
@@ -426,6 +485,7 @@
             let xr = a;
             let xr_old = a;
             let error = 100;
+            let reachedMaxIter = false;
 
             while (iter < maxIter) {
                 xr = (a + b) / 2;
@@ -458,14 +518,25 @@
 
                 xr_old = xr;
                 iter++;
+                
+                if (iter >= maxIter) {
+                    reachedMaxIter = true;
+                    break;
+                }
             }
 
+            const lastRow = rows[rows.length - 1];
+            const converged = lastRow && (lastRow.error <= tolPercent || lastRow.fxr === 0);
+            
             return {
                 rows: rows,
                 root: xr,
+                a: a,
+                b: b,
                 a_inicial: rows[0]?.a || 0,
                 b_inicial: rows[0]?.b || 0,
-                converged: error <= tolPercent || (rows.length > 0 && rows[rows.length-1].fxr === 0)
+                converged: converged,
+                reachedMaxIter: reachedMaxIter && !converged
             };
         }
 
@@ -488,6 +559,7 @@
             let xr = a;
             let xr_old = a;
             let error = 100;
+            let reachedMaxIter = false;
 
             while (iter < maxIter) {
                 xr = (a * fb - b * fa) / (fb - fa);
@@ -522,24 +594,192 @@
 
                 xr_old = xr;
                 iter++;
+                
+                if (iter >= maxIter) {
+                    reachedMaxIter = true;
+                    break;
+                }
             }
 
+            const lastRow = rows[rows.length - 1];
+            const converged = lastRow && (lastRow.error <= tolPercent || lastRow.fxr === 0);
+            
             return {
                 rows: rows,
                 root: xr,
+                a: a,
+                b: b,
                 a_inicial: rows[0]?.a || 0,
                 b_inicial: rows[0]?.b || 0,
-                converged: error <= tolPercent || (rows.length > 0 && rows[rows.length-1].fxr === 0)
+                converged: converged,
+                reachedMaxIter: reachedMaxIter && !converged
             };
+        }
+
+        // ============ FUNCIÓN DE GRÁFICO CORREGIDA ============
+        function actualizarGrafico(chartId, fn, a, b, root, label, color) {
+            const canvas = document.getElementById(chartId);
+            if (!canvas) return;
+            
+            // 1. DESTRUIR gráfico anterior
+            if (chartId === 'chartBisec' && chartBisecInstance) {
+                chartBisecInstance.destroy();
+                chartBisecInstance = null;
+            } else if (chartId === 'chartFalsa' && chartFalsaInstance) {
+                chartFalsaInstance.destroy();
+                chartFalsaInstance = null;
+            }
+
+            // 2. LIMPIAR canvas manualmente
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 3. Calcular rango de x
+            const padding = Math.max((b - a) * 0.2, 0.5);
+            let xMin = a - padding;
+            let xMax = b + padding;
+            
+            if (chartId === 'chartBisec' && xMin < 8.5) {
+                xMin = 8.5;
+            }
+
+            // 4. Generar puntos de la curva
+            const step = (xMax - xMin) / 200;
+            const puntosX = [];
+            const puntosY = [];
+            let minY = Infinity;
+            let maxY = -Infinity;
+            
+            for (let x = xMin; x <= xMax; x += step) {
+                const y = fn(x);
+                if (!isNaN(y) && isFinite(y)) {
+                    puntosX.push(x);
+                    puntosY.push(y);
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+
+            if (puntosX.length === 0) {
+                ctx.fillStyle = '#7a8aa0';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No hay datos para graficar', canvas.width/2, canvas.height/2);
+                return;
+            }
+
+            // 5. Ajustar límites Y
+            const yRange = maxY - minY;
+            const yPadding = Math.max(yRange * 0.15, 1);
+            const yMin = minY - yPadding;
+            const yMax2 = maxY + yPadding;
+
+            // 6. Preparar datasets
+            const datasets = [{
+                label: label,
+                data: puntosX.map((x, i) => ({ x: x, y: puntosY[i] })),
+                borderColor: color,
+                backgroundColor: color + '30',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                borderWidth: 2,
+                showLine: true,
+            }];
+
+            // 7. Agregar punto de la raíz
+            if (root && !isNaN(root) && isFinite(root) && root >= xMin && root <= xMax) {
+                const rootY = fn(root);
+                if (!isNaN(rootY) && isFinite(rootY)) {
+                    datasets.push({
+                        label: 'Raíz',
+                        data: [{ x: root, y: rootY }],
+                        borderColor: '#ff0000',
+                        backgroundColor: '#ff0000',
+                        pointRadius: 8,
+                        pointStyle: 'circle',
+                        showLine: false,
+                    });
+                }
+            }
+
+            // 8. CONFIGURACIÓN DEL GRÁFICO
+            const config = {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 10 },
+                                boxWidth: 12,
+                                padding: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label === 'Raíz') {
+                                        return `Raíz: x = ${context.parsed.x.toFixed(4)}, f(x) = ${context.parsed.y.toFixed(4)}`;
+                                    } else {
+                                        return `f(${context.parsed.x.toFixed(4)}) = ${context.parsed.y.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: chartId === 'chartBisec' ? 'C (Mbps)' : 't (años)',
+                                font: { size: 10 }
+                            },
+                            grid: { display: false },
+                            min: xMin,
+                            max: xMax
+                        },
+                        y: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'f(x)',
+                                font: { size: 10 }
+                            },
+                            grid: { display: true, color: '#eaeef5' },
+                            min: yMin,
+                            max: yMax2
+                        }
+                    }
+                }
+            };
+
+            // 9. Crear nuevo gráfico
+            try {
+                const newChart = new Chart(canvas, config);
+                if (chartId === 'chartBisec') {
+                    chartBisecInstance = newChart;
+                } else {
+                    chartFalsaInstance = newChart;
+                }
+            } catch (e) {
+                console.error('Error al crear gráfico:', e);
+            }
         }
 
         // Renderizar tabla
         function renderTable(tbodyId, data, raizSpanId, interpretDivId, contextMessage, 
-                             tolDisplayId, aDisplayId, bDisplayId, convergenceId) {
+                             tolDisplayId, maxIterDisplayId, aDisplayId, bDisplayId, convergenceId, chartId, fn) {
             const tbody = document.getElementById(tbodyId);
             const raizSpan = document.getElementById(raizSpanId);
             const interpretDiv = document.getElementById(interpretDivId);
             const tolDisplay = document.getElementById(tolDisplayId);
+            const maxIterDisplay = document.getElementById(maxIterDisplayId);
             const aDisplay = document.getElementById(aDisplayId);
             const bDisplay = document.getElementById(bDisplayId);
             const convergenceDiv = document.getElementById(convergenceId);
@@ -569,7 +809,11 @@
             for (let i = 0; i < data.rows.length; i++) {
                 const r = data.rows[i];
                 const isConverged = (i === lastIdx && data.converged);
-                const rowClass = isConverged ? 'converged' : '';
+                const isMaxIter = (i === lastIdx && data.reachedMaxIter);
+                let rowClass = '';
+                if (isConverged) rowClass = 'converged';
+                else if (isMaxIter) rowClass = 'max-iter';
+                
                 const errorDisplay = (i === 0) ? '100.000000' : r.error.toFixed(6);
                 
                 html += `<tr class="${rowClass}">
@@ -584,14 +828,23 @@
             
             tbody.innerHTML = html;
 
-            // Mostrar convergencia
+            // Mostrar convergencia o máximo de iteraciones
             if (convergenceDiv) {
                 if (data.converged) {
                     const lastRow = data.rows[data.rows.length-1];
                     convergenceDiv.style.display = 'block';
+                    convergenceDiv.className = 'convergence-info';
                     convergenceDiv.innerHTML = `
                         <strong>✓ Convergencia en la iteración ${lastRow.iter}</strong><br>
                         Error: ${lastRow.error.toFixed(6)}% < 0.5%
+                    `;
+                } else if (data.reachedMaxIter) {
+                    const lastRow = data.rows[data.rows.length-1];
+                    convergenceDiv.style.display = 'block';
+                    convergenceDiv.className = 'convergence-info max-iter-info';
+                    convergenceDiv.innerHTML = `
+                        <strong>⚠️ Se alcanzó el máximo de iteraciones (${lastRow.iter})</strong><br>
+                        Error final: ${lastRow.error.toFixed(6)}% > 0.5%
                     `;
                 } else {
                     convergenceDiv.style.display = 'none';
@@ -602,10 +855,30 @@
             const rootVal = data.root;
             raizSpan.textContent = rootVal !== undefined ? rootVal.toFixed(6) : '—';
 
+            // ============ ACTUALIZAR GRÁFICO ============
+            // USAR los valores CORRECTOS de a y b desde el resultado
+            if (chartId && fn && data.a !== undefined && data.b !== undefined) {
+                const aVal = data.a;
+                const bVal = data.b;
+                const color = contextMessage === 'bisec' ? '#2a7de1' : '#2a9d8f';
+                const label = contextMessage === 'bisec' ? 'f(C)' : 'f(t)';
+                
+                console.log('Actualizando gráfico:', chartId, 'a=', aVal, 'b=', bVal, 'root=', rootVal);
+                
+                // Llamar a la función de actualización del gráfico
+                actualizarGrafico(chartId, fn, aVal, bVal, rootVal, label, color);
+            }
+
             // Actualizar tolerancia mostrada
             if (tolDisplay) {
                 const tolInput = document.getElementById(tolDisplayId.replace('Display', ''));
                 if (tolInput) tolDisplay.textContent = tolInput.value;
+            }
+
+            // Actualizar max iter mostrado
+            if (maxIterDisplay) {
+                const maxIterInput = document.getElementById(maxIterDisplayId.replace('Display', ''));
+                if (maxIterInput) maxIterDisplay.textContent = maxIterInput.value;
             }
 
             // Interpretación
@@ -615,6 +888,8 @@
                     extra = `Capacidad mínima ≈ ${rootVal.toFixed(4)} Mbps. En la práctica, redondear hacia arriba (ej. ${Math.ceil(rootVal)} Mbps) por disponibilidad y tráfico pico.`;
                     if (data.converged) {
                         extra += ` <span class="convergence-badge">✓ Convergida en iter ${data.rows.length}</span>`;
+                    } else if (data.reachedMaxIter) {
+                        extra += ` <span class="max-iter-badge">⚠️ Max iter alcanzado (${data.rows.length})</span>`;
                     }
                 } else if (contextMessage === 'falsa') {
                     const t = rootVal;
@@ -623,6 +898,8 @@
                     extra = `t ≈ ${t.toFixed(4)} años. Antes de t*, el costo local (C1) es menor; después, la nube (C2) es más económica. Conviene migrar a partir de ${t.toFixed(2)} años.`;
                     if (data.converged) {
                         extra += ` <span class="convergence-badge">✓ Convergida en iter ${data.rows.length}</span>`;
+                    } else if (data.reachedMaxIter) {
+                        extra += ` <span class="max-iter-badge">⚠️ Max iter alcanzado (${data.rows.length})</span>`;
                     }
                 }
                 interpretDiv.innerHTML = `<span style="font-weight:600;">📌 Interpretación:</span> ${extra}`;
@@ -634,28 +911,32 @@
             const a = parseFloat(document.getElementById('bisecA').value);
             const b = parseFloat(document.getElementById('bisecB').value);
             const tol = parseFloat(document.getElementById('bisecTol').value);
+            const maxIter = parseInt(document.getElementById('bisecMaxIter').value) || 50;
             
-            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0) {
+            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0 || maxIter < 1) {
                 return;
             }
             
-            const result = biseccion(a, b, tol, 50);
+            const result = biseccion(a, b, tol, maxIter);
             renderTable('bodyBisec', result, 'bisecRaiz', 'bisecInterpret', 'bisec', 
-                        'bisecTolDisplay', 'bisecADisplay', 'bisecBDisplay', 'bisecConvergence');
+                        'bisecTolDisplay', 'bisecMaxIterDisplay', 'bisecADisplay', 'bisecBDisplay', 
+                        'bisecConvergence', 'chartBisec', fBisec);
         }
 
         function actualizarFalsa() {
             const a = parseFloat(document.getElementById('falsaA').value);
             const b = parseFloat(document.getElementById('falsaB').value);
             const tol = parseFloat(document.getElementById('falsaTol').value);
+            const maxIter = parseInt(document.getElementById('falsaMaxIter').value) || 50;
             
-            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0) {
+            if (isNaN(a) || isNaN(b) || isNaN(tol) || tol <= 0 || maxIter < 1) {
                 return;
             }
             
-            const result = falsaPosicion(a, b, tol, 50);
+            const result = falsaPosicion(a, b, tol, maxIter);
             renderTable('bodyFalsa', result, 'falsaRaiz', 'falsaInterpret', 'falsa',
-                        'falsaTolDisplay', 'falsaADisplay', 'falsaBDisplay', 'falsaConvergence');
+                        'falsaTolDisplay', 'falsaMaxIterDisplay', 'falsaADisplay', 'falsaBDisplay', 
+                        'falsaConvergence', 'chartFalsa', fFalsa);
         }
 
         // Eventos
@@ -663,18 +944,27 @@
         document.getElementById('btnFalsa').addEventListener('click', actualizarFalsa);
 
         // Actualización automática
-        ['bisecA', 'bisecB', 'bisecTol'].forEach(id => {
-            document.getElementById(id).addEventListener('input', actualizarBiseccion);
+        let timeoutBisec = null;
+        let timeoutFalsa = null;
+
+        ['bisecA', 'bisecB', 'bisecTol', 'bisecMaxIter'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                clearTimeout(timeoutBisec);
+                timeoutBisec = setTimeout(actualizarBiseccion, 300);
+            });
         });
 
-        ['falsaA', 'falsaB', 'falsaTol'].forEach(id => {
-            document.getElementById(id).addEventListener('input', actualizarFalsa);
+        ['falsaA', 'falsaB', 'falsaTol', 'falsaMaxIter'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                clearTimeout(timeoutFalsa);
+                timeoutFalsa = setTimeout(actualizarFalsa, 300);
+            });
         });
 
         // Carga inicial
         window.addEventListener('load', function() {
-            actualizarBiseccion();
-            actualizarFalsa();
+            setTimeout(actualizarBiseccion, 300);
+            setTimeout(actualizarFalsa, 400);
         });
     })();
 </script>
