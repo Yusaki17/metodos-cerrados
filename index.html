@@ -173,6 +173,8 @@
         .table-wrap {
             overflow-x: auto;
             padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
         }
         table {
             width: 100%;
@@ -189,6 +191,10 @@
             border-bottom: 2px solid #d0dae8;
             font-size: 0.8rem;
             letter-spacing: 0.3px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f0f4fb;
         }
         td {
             padding: 0.6rem 0.8rem;
@@ -305,6 +311,14 @@
             margin-bottom: 0.3rem;
             font-weight: 500;
         }
+        .iter-counter {
+            font-size: 0.8rem;
+            color: #4a6a8a;
+            text-align: right;
+            padding: 0.3rem 0.8rem;
+            background: #f8faff;
+            border-top: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body>
@@ -368,6 +382,7 @@
                         </table>
                     </div>
                     <div id="bisecConvergence" class="convergence-info" style="display:none;"></div>
+                    <div id="bisecCounter" class="iter-counter"></div>
                 </div>
                 <div class="chart-container">
                     <div class="chart-title">📈 Comportamiento de f(C) - Bisección</div>
@@ -433,6 +448,7 @@
                         </table>
                     </div>
                     <div id="falsaConvergence" class="convergence-info" style="display:none;"></div>
+                    <div id="falsaCounter" class="iter-counter"></div>
                 </div>
                 <div class="chart-container">
                     <div class="chart-title">📈 Comportamiento de f(t) - Falsa Posición</div>
@@ -466,7 +482,9 @@
             return 45 + 12 * t - 20 * Math.exp(0.4 * t);
         }
 
-        // Método de Bisección
+        // ============================================================
+        // MÉTODO DE BISECCIÓN - AHORA CON TODAS LAS ITERACIONES
+        // ============================================================
         function biseccion(a, b, tolPercent, maxIter = 50) {
             if (a >= b) return { error: "Intervalo inválido: a debe ser < b." };
             
@@ -481,14 +499,17 @@
             }
 
             let rows = [];
-            let iter = 0;
             let xr = a;
             let xr_old = a;
             let error = 100;
+            let converged = false;
             let reachedMaxIter = false;
+            let a_actual = a;
+            let b_actual = b;
 
-            while (iter < maxIter) {
-                xr = (a + b) / 2;
+            // FORZAR todas las iteraciones hasta maxIter
+            for (let iter = 0; iter < maxIter; iter++) {
+                xr = (a_actual + b_actual) / 2;
                 let fxr = fBisec(xr);
                 
                 if (iter === 0) {
@@ -497,50 +518,67 @@
                     error = Math.abs((xr - xr_old) / xr) * 100;
                 }
 
+                // Guardar cada iteración
                 rows.push({
                     iter: iter + 1,
-                    a: a,
-                    b: b,
+                    a: a_actual,
+                    b: b_actual,
                     xr: xr,
                     fxr: fxr,
                     error: error
                 });
 
+                // Verificar convergencia
                 if (fxr === 0 || error <= tolPercent) {
+                    converged = true;
+                    // Si convergió, las siguientes iteraciones serán iguales
+                    // Pero seguimos llenando la tabla con los mismos valores
+                    for (let j = iter + 1; j < maxIter; j++) {
+                        rows.push({
+                            iter: j + 1,
+                            a: a_actual,
+                            b: b_actual,
+                            xr: xr,
+                            fxr: fxr,
+                            error: error
+                        });
+                    }
                     break;
                 }
 
-                if (fBisec(a) * fxr < 0) {
-                    b = xr;
+                // Actualizar intervalo
+                if (fBisec(a_actual) * fxr < 0) {
+                    b_actual = xr;
                 } else {
-                    a = xr;
+                    a_actual = xr;
                 }
 
                 xr_old = xr;
-                iter++;
-                
-                if (iter >= maxIter) {
-                    reachedMaxIter = true;
-                    break;
-                }
+            }
+
+            // Verificar si se alcanzó el máximo sin converger
+            if (!converged && rows.length === maxIter) {
+                reachedMaxIter = true;
             }
 
             const lastRow = rows[rows.length - 1];
-            const converged = lastRow && (lastRow.error <= tolPercent || lastRow.fxr === 0);
             
             return {
                 rows: rows,
-                root: xr,
+                root: lastRow?.xr || 0,
                 a: a,
                 b: b,
-                a_inicial: rows[0]?.a || 0,
-                b_inicial: rows[0]?.b || 0,
+                a_inicial: a,
+                b_inicial: b,
                 converged: converged,
-                reachedMaxIter: reachedMaxIter && !converged
+                reachedMaxIter: reachedMaxIter,
+                totalIter: rows.length
             };
         }
 
-        // Método de Falsa Posición
+        // ============================================================
+        // MÉTODO DE FALSA POSICIÓN - AHORA CON TODAS LAS ITERACIONES
+        // ============================================================
         function falsaPosicion(a, b, tolPercent, maxIter = 50) {
             if (a >= b) return { error: "Intervalo inválido: a debe ser < b." };
             
@@ -555,14 +593,19 @@
             }
 
             let rows = [];
-            let iter = 0;
             let xr = a;
             let xr_old = a;
             let error = 100;
+            let converged = false;
             let reachedMaxIter = false;
+            let a_actual = a;
+            let b_actual = b;
+            let fa_actual = fa;
+            let fb_actual = fb;
 
-            while (iter < maxIter) {
-                xr = (a * fb - b * fa) / (fb - fa);
+            // FORZAR todas las iteraciones hasta maxIter
+            for (let iter = 0; iter < maxIter; iter++) {
+                xr = (a_actual * fb_actual - b_actual * fa_actual) / (fb_actual - fa_actual);
                 let fxr = fFalsa(xr);
                 
                 if (iter === 0) {
@@ -571,57 +614,69 @@
                     error = Math.abs((xr - xr_old) / xr) * 100;
                 }
 
+                // Guardar cada iteración
                 rows.push({
                     iter: iter + 1,
-                    a: a,
-                    b: b,
+                    a: a_actual,
+                    b: b_actual,
                     xr: xr,
                     fxr: fxr,
                     error: error
                 });
 
+                // Verificar convergencia
                 if (fxr === 0 || error <= tolPercent) {
+                    converged = true;
+                    // Si convergió, las siguientes iteraciones serán iguales
+                    for (let j = iter + 1; j < maxIter; j++) {
+                        rows.push({
+                            iter: j + 1,
+                            a: a_actual,
+                            b: b_actual,
+                            xr: xr,
+                            fxr: fxr,
+                            error: error
+                        });
+                    }
                     break;
                 }
 
-                if (fFalsa(a) * fxr < 0) {
-                    b = xr;
-                    fb = fxr;
+                // Actualizar intervalo
+                if (fFalsa(a_actual) * fxr < 0) {
+                    b_actual = xr;
+                    fb_actual = fxr;
                 } else {
-                    a = xr;
-                    fa = fxr;
+                    a_actual = xr;
+                    fa_actual = fxr;
                 }
 
                 xr_old = xr;
-                iter++;
-                
-                if (iter >= maxIter) {
-                    reachedMaxIter = true;
-                    break;
-                }
+            }
+
+            if (!converged && rows.length === maxIter) {
+                reachedMaxIter = true;
             }
 
             const lastRow = rows[rows.length - 1];
-            const converged = lastRow && (lastRow.error <= tolPercent || lastRow.fxr === 0);
             
             return {
                 rows: rows,
-                root: xr,
+                root: lastRow?.xr || 0,
                 a: a,
                 b: b,
-                a_inicial: rows[0]?.a || 0,
-                b_inicial: rows[0]?.b || 0,
+                a_inicial: a,
+                b_inicial: b,
                 converged: converged,
-                reachedMaxIter: reachedMaxIter && !converged
+                reachedMaxIter: reachedMaxIter,
+                totalIter: rows.length
             };
         }
 
-        // ============ FUNCIÓN DE GRÁFICO CORREGIDA ============
+        // ============ FUNCIÓN DE GRÁFICO ============
         function actualizarGrafico(chartId, fn, a, b, root, label, color) {
             const canvas = document.getElementById(chartId);
             if (!canvas) return;
             
-            // 1. DESTRUIR gráfico anterior
             if (chartId === 'chartBisec' && chartBisecInstance) {
                 chartBisecInstance.destroy();
                 chartBisecInstance = null;
@@ -630,11 +685,9 @@
                 chartFalsaInstance = null;
             }
 
-            // 2. LIMPIAR canvas manualmente
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 3. Calcular rango de x
             const padding = Math.max((b - a) * 0.2, 0.5);
             let xMin = a - padding;
             let xMax = b + padding;
@@ -643,7 +696,6 @@
                 xMin = 8.5;
             }
 
-            // 4. Generar puntos de la curva
             const step = (xMax - xMin) / 200;
             const puntosX = [];
             const puntosY = [];
@@ -668,13 +720,11 @@
                 return;
             }
 
-            // 5. Ajustar límites Y
             const yRange = maxY - minY;
             const yPadding = Math.max(yRange * 0.15, 1);
             const yMin = minY - yPadding;
             const yMax2 = maxY + yPadding;
 
-            // 6. Preparar datasets
             const datasets = [{
                 label: label,
                 data: puntosX.map((x, i) => ({ x: x, y: puntosY[i] })),
@@ -687,7 +737,6 @@
                 showLine: true,
             }];
 
-            // 7. Agregar punto de la raíz
             if (root && !isNaN(root) && isFinite(root) && root >= xMin && root <= xMax) {
                 const rootY = fn(root);
                 if (!isNaN(rootY) && isFinite(rootY)) {
@@ -703,7 +752,6 @@
                 }
             }
 
-            // 8. CONFIGURACIÓN DEL GRÁFICO
             const config = {
                 type: 'scatter',
                 data: { datasets: datasets },
@@ -759,7 +807,6 @@
                 }
             };
 
-            // 9. Crear nuevo gráfico
             try {
                 const newChart = new Chart(canvas, config);
                 if (chartId === 'chartBisec') {
@@ -774,7 +821,8 @@
 
         // Renderizar tabla
         function renderTable(tbodyId, data, raizSpanId, interpretDivId, contextMessage, 
-                             tolDisplayId, maxIterDisplayId, aDisplayId, bDisplayId, convergenceId, chartId, fn) {
+                             tolDisplayId, maxIterDisplayId, aDisplayId, bDisplayId, convergenceId, 
+                             counterId, chartId, fn) {
             const tbody = document.getElementById(tbodyId);
             const raizSpan = document.getElementById(raizSpanId);
             const interpretDiv = document.getElementById(interpretDivId);
@@ -783,12 +831,14 @@
             const aDisplay = document.getElementById(aDisplayId);
             const bDisplay = document.getElementById(bDisplayId);
             const convergenceDiv = document.getElementById(convergenceId);
+            const counterDiv = document.getElementById(counterId);
 
             if (!data || data.error) {
                 tbody.innerHTML = `<tr><td colspan="6" style="color:#b33; font-family: inherit; text-align: center;">⚠️ ${data?.error || 'Error'}</td></tr>`;
                 raizSpan.textContent = '—';
                 if (interpretDiv) interpretDiv.innerHTML = `<span style="font-weight:600;">📌 Interpretación:</span> ${data?.error || 'Error en el cálculo'}`;
                 if (convergenceDiv) convergenceDiv.style.display = 'none';
+                if (counterDiv) counterDiv.textContent = '';
                 return;
             }
 
@@ -796,12 +846,18 @@
                 tbody.innerHTML = `<tr><td colspan="6" style="color:#7a8aa0; font-family: inherit; text-align: center;">No se generaron iteraciones</td></tr>`;
                 raizSpan.textContent = '—';
                 if (convergenceDiv) convergenceDiv.style.display = 'none';
+                if (counterDiv) counterDiv.textContent = '';
                 return;
             }
 
             // Mostrar intervalo
             if (aDisplay) aDisplay.textContent = data.a_inicial.toFixed(2);
             if (bDisplay) bDisplay.textContent = data.b_inicial.toFixed(2);
+
+            // Mostrar contador de iteraciones
+            if (counterDiv) {
+                counterDiv.textContent = `Mostrando ${data.rows.length} iteraciones de ${data.rows.length} totales`;
+            }
 
             let html = '';
             const lastIdx = data.rows.length - 1;
@@ -811,10 +867,19 @@
                 const isConverged = (i === lastIdx && data.converged);
                 const isMaxIter = (i === lastIdx && data.reachedMaxIter);
                 let rowClass = '';
-                if (isConverged) rowClass = 'converged';
-                else if (isMaxIter) rowClass = 'max-iter';
+                let errorDisplay = '';
                 
-                const errorDisplay = (i === 0) ? '100.000000' : r.error.toFixed(6);
+                if (isConverged) {
+                    rowClass = 'converged';
+                    errorDisplay = r.error.toFixed(6) + '% ✓';
+                } else if (isMaxIter) {
+                    rowClass = 'max-iter';
+                    errorDisplay = r.error.toFixed(6) + '% ⚠️';
+                } else if (i === 0) {
+                    errorDisplay = '100.000000%';
+                } else {
+                    errorDisplay = r.error.toFixed(6) + '%';
+                }
                 
                 html += `<tr class="${rowClass}">
                     <td>${r.iter}</td>
@@ -855,17 +920,13 @@
             const rootVal = data.root;
             raizSpan.textContent = rootVal !== undefined ? rootVal.toFixed(6) : '—';
 
-            // ============ ACTUALIZAR GRÁFICO ============
-            // USAR los valores CORRECTOS de a y b desde el resultado
+            // Actualizar gráfico
             if (chartId && fn && data.a !== undefined && data.b !== undefined) {
                 const aVal = data.a;
                 const bVal = data.b;
                 const color = contextMessage === 'bisec' ? '#2a7de1' : '#2a9d8f';
                 const label = contextMessage === 'bisec' ? 'f(C)' : 'f(t)';
                 
-                console.log('Actualizando gráfico:', chartId, 'a=', aVal, 'b=', bVal, 'root=', rootVal);
-                
-                // Llamar a la función de actualización del gráfico
                 actualizarGrafico(chartId, fn, aVal, bVal, rootVal, label, color);
             }
 
@@ -920,7 +981,7 @@
             const result = biseccion(a, b, tol, maxIter);
             renderTable('bodyBisec', result, 'bisecRaiz', 'bisecInterpret', 'bisec', 
                         'bisecTolDisplay', 'bisecMaxIterDisplay', 'bisecADisplay', 'bisecBDisplay', 
-                        'bisecConvergence', 'chartBisec', fBisec);
+                        'bisecConvergence', 'bisecCounter', 'chartBisec', fBisec);
         }
 
         function actualizarFalsa() {
@@ -936,14 +997,13 @@
             const result = falsaPosicion(a, b, tol, maxIter);
             renderTable('bodyFalsa', result, 'falsaRaiz', 'falsaInterpret', 'falsa',
                         'falsaTolDisplay', 'falsaMaxIterDisplay', 'falsaADisplay', 'falsaBDisplay', 
-                        'falsaConvergence', 'chartFalsa', fFalsa);
+                        'falsaConvergence', 'falsaCounter', 'chartFalsa', fFalsa);
         }
 
         // Eventos
         document.getElementById('btnBisec').addEventListener('click', actualizarBiseccion);
         document.getElementById('btnFalsa').addEventListener('click', actualizarFalsa);
 
-        // Actualización automática
         let timeoutBisec = null;
         let timeoutFalsa = null;
 
